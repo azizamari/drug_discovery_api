@@ -76,7 +76,8 @@ def input_pipeline(smiles):
   features|=lipinski(smiles)
   return features
 
-
-smiles_example="CC(C)C[C@H](NC(=O)[C@@H](NC(=O)[C@@H](N)CCC(=O)O)C(C)C)C(=O)N[C@@H](Cc1ccccc1)[C@@H](O)C(=O)N[C@@H](CC(=O)O)C(=O)N[C@@H](C)C(=O)N[C@@H](CCC(=O)O)C(=O)N[C@@H](Cc1ccccc1)C(=O)O"
-s=input_pipeline(smiles_example)
-print(s)
+def infer_smiles(smiles, model):
+  features=input_pipeline(smiles)
+  predicted_class=model.predict([list(features.values())[1:]])[0]
+  result=features|{'class':predicted_class}
+  return result
