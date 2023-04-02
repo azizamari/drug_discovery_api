@@ -1,10 +1,12 @@
 import pickle
 import numpy as np
+from xgboost import XGBClassifier
 from rdkit import Chem
 from rdkit.Chem import Descriptors, Lipinski, AllChem
 
 def get_model():
-    model = pickle.load(open('model.sav', 'rb'))
+    model = XGBClassifier()
+    model.load_model('model.json')
     return model
 
 def clean_smiles(i):
@@ -69,15 +71,20 @@ def calculate_num_heavy_atoms(smile):
 def input_pipeline(smiles):
   smiles=clean_smiles(smiles)
   features={'canonical_smiles':smiles}
+  features|=lipinski(smiles)
   features|=calculate_num_heavy_atoms(smiles)
   features|=calculate_num_chiral_centers(smiles)
   features|=calculate_num_rings(smiles)
   features|=get_rotatable_bonds(smiles)
-  features|=lipinski(smiles)
   return features
 
 def infer_smiles(smiles, model):
   features=input_pipeline(smiles)
   predicted_class=model.predict([list(features.values())[1:]])[0]
-  result=features|{'class':predicted_class}
+  result=features|{'class':int(predicted_class)}
+  predicted_proba=model.predict_proba([list(features.values())[1:]])[0]
+  result=result|{'confidence':float(predicted_proba[predicted_class])}
+
   return result
+model = get_model()
+print(infer_smiles( 'CC(C)C[C@H](NC(=O)[C@@H](NC(=O)[C@@H](N)CCC(=O)O)C(C)C)C(=O)N[C@@H](Cc1ccccc1)[C@@H](O)C(=O)N[C@@H](CC(=O)O)C(=O)N[C@@H](C)C(=O)N[C@@H](CCC(=O)O)C(=O)N[C@@H](Cc1ccccc1)C(=O)O', model))

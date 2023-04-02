@@ -1,7 +1,7 @@
 from fastapi import FastAPI, File
 import json
 from fastapi.middleware.cors import CORSMiddleware
-from utils_functions import get_model
+from utils_functions import get_model, infer_smiles
 model = get_model()
 app = FastAPI(
     title="Drug Discovery model inference API",
@@ -29,4 +29,4 @@ class input_data(BaseModel):
 
 @app.post("/predict")
 async def predict_class(data: input_data):
-    return {"result": data.canonical_smiles}
+    return infer_smiles(data.canonical_smiles, model)
